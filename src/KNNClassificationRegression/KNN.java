@@ -22,7 +22,7 @@ public class KNN {
             isTestInstanceNormalized = false;
 
     private int nearestNeighborCount = 1,
-            instanceCount = 0,
+            instancesCount = 0,
             instanceAttributesCount = 0,
             maxAttributesCount = 0,
             indexOfMaxAttributesCountInstance = 0;
@@ -30,65 +30,83 @@ public class KNN {
     private HashMap currentTrainingInstance,
             testInstance,
             testInstanceNormalized,
-            attrDataMap,
+            mapOfAggregatedAttributeValue,
             attrMean,
             attrStddev,
             nearestNeighbours;
 
-    private ArrayList trainingInstanceList,
-            trainingInstanceListNormalized,
-            trainingInstanceLabels,
-            instancesMSE,
-            attrDataList;
+    private ArrayList listOfTrainingInstance,
+            listOfTrainingInstancesNormalized,
+            listOfTrainingInstanceLabel,
+            listOfInstanceMeanSquaredError,
+            listOfAttributeValue;
 
     public KNN(int nearestNeighborCount, boolean isClassification) {
 
-        //condition checks
+        // Setting for count for nearest neighbours
+        // Setting for KNN classification or regression
         this.nearestNeighborCount = nearestNeighborCount;
         this.isClassification = isClassification;
 
-        trainingInstanceList = new ArrayList<HashMap<String, Double>>();
-        trainingInstanceLabels = new ArrayList<Object>();
+        // Training instance is represent using HashMap<String,Double>
+        // listOfTrainingInstance links all the training instances
+        listOfTrainingInstance = new ArrayList<HashMap<String, Double>>();
+
+        // listOfTrainingInstanceLabel stores the label for each training instance
+        // The position of each label corresponds to listOfTrainingInstance
+        // E.g. listOfTrainingInstance.get(0) has label of 'listOfTrainingInstanceLabel.get(0)'
+        listOfTrainingInstanceLabel = new ArrayList<Object>();
 
     }
 
+    // This method creates training instance using an iterative approach
     public void createInstance() {
-        //
 
-        if (trainingInstanceLabels.size() != trainingInstanceList.size()) {
+        // If label(s) are missing in training data, return
+        if (listOfTrainingInstanceLabel.size() != listOfTrainingInstance.size()) {
             System.err.println("Perhaps a label wasn't assigned to a previous instance.");
             return;
         }
 
-        // Count the number of attributes of new instance
+        // Records the attributes count for the training instance
+        // 
         this.instanceAttributesCount = 0;
 
-        // Create a new instance and points to it
+        // Create a new instance
         HashMap<String, Double> newInstance = new HashMap<String, Double>();
+
+        // Classwide reference points to the new instance, the reference is used at setInstanceAttr subsequently
         this.currentTrainingInstance = newInstance;
-        trainingInstanceList.add(newInstance);
-        instanceCount++;
+
+        // Append the new training instance to the list
+        listOfTrainingInstance.add(newInstance);
+        instancesCount++;
+
+        // Any new training instance add, mark the flag to false
         isNormalized = false;
     }
 
     public void setInstanceAttr(String attrName, Double val) {
-        //this.currentInst.put(attrName, val);
 
+        // Adding attribute and its value to the training instance
         this.currentTrainingInstance.put(attrName, val);
 
+        // Increments the counter, to detects the maximum number of attributes
+        // The purspose is used to find the training instance with maximum number of attributes
+        // Because some training instance might have missing attributes
         this.instanceAttributesCount++;
         if (this.instanceAttributesCount > this.maxAttributesCount) {
             this.maxAttributesCount = this.instanceAttributesCount;
-            this.indexOfMaxAttributesCountInstance = (instanceCount - 1);
+            this.indexOfMaxAttributesCountInstance = (instancesCount - 1);
         }
     }
 
     public void setInstanceLabel(Object label) {
-        trainingInstanceLabels.add((instanceCount - 1), label);
+        listOfTrainingInstanceLabel.add((instancesCount - 1), label);
     }
 
     public int getCurrentInstanceCount() {
-        return instanceCount;
+        return instancesCount;
     }
 
     public int getMaxAttributesInstanceCountIndex() {
@@ -96,6 +114,8 @@ public class KNN {
     }
 
     public void createTestInstance() {
+        // Create a new test instance
+        // Mark the flag to false since every test instance requires normalization
         this.testInstance = new HashMap<String, Double>();
         isTestInstanceNormalized = false;
     }
@@ -107,43 +127,61 @@ public class KNN {
         this.instanceAttributesCount++;
         if (this.instanceAttributesCount > this.maxAttributesCount) {
             this.maxAttributesCount = this.instanceAttributesCount;
-            this.indexOfMaxAttributesCountInstance = (instanceCount - 1);
+            this.indexOfMaxAttributesCountInstance = (instancesCount - 1);
         }
     }
 
+    /**
+     * Performs Z-score normalization on training data set.
+     */
     public void zScoreNormalization() {
 
-        attrDataMap = new HashMap<String, LinkedList<Double>>();
+        /*  Z-Score Normalization
+         **************************************
+         * - Find mean for each attribute
+         * - Find stddev for each attribute
+         * - Compute z score
+         **************************************/
+        
+        // Each key(attribute) contains a list of values of the attribute collected from training instanes
+        mapOfAggregatedAttributeValue = new HashMap<String, LinkedList<Double>>();
+
+        // Each key(attribute) contains mean value for the attribute
         attrMean = new HashMap<String, Double>();
+
+        // Each key(attribute) contains stddev for the attribute
         attrStddev = new HashMap<String, Double>();
-        HashMap<String, Double> maxAttrInstance = (HashMap<String, Double>) this.trainingInstanceList.get(this.indexOfMaxAttributesCountInstance);
+
+        // Get the instance with maximum attributes
+        // The normalization will iterate using the keys from maximum attributes
+        HashMap<String, Double> maxAttrInstance = (HashMap<String, Double>) this.listOfTrainingInstance.get(this.indexOfMaxAttributesCountInstance);
         HashMap<String, Double> tempInstance;
 
-        // Find mean of each attribute and aggregate attribute value to a linkedlist
+        //* - Find mean for each attributes
         for (String key : maxAttrInstance.keySet()) {
             double sum = 0, mean = 0;
-            attrDataList = new ArrayList();
-            for (int instanceCounter = 0; instanceCounter < this.trainingInstanceList.size(); instanceCounter++) {
-                tempInstance = (HashMap<String, Double>) this.trainingInstanceList.get(instanceCounter);
+            listOfAttributeValue = new ArrayList();
+
+            // Iterate through each training instance and retrieve the value for correspoding attribute
+            // Place the attribute value inside the corresponding list
+            // Compute mean at the same time
+            for (int instanceCounter = 0; instanceCounter < this.listOfTrainingInstance.size(); instanceCounter++) {
+                tempInstance = (HashMap<String, Double>) this.listOfTrainingInstance.get(instanceCounter);
                 if (tempInstance.containsKey(key.toString())) {
                     double attrVal = tempInstance.get(key.toString());
-                    attrDataList.add(attrVal);
+                    listOfAttributeValue.add(attrVal);
                     sum += attrVal;
-                    //System.out.println(key.toString()+":"+sum);
                 }
             }
-            mean = sum / attrDataList.size();
-            //System.out.println("sum:"+sum+",attrDataList.size()"+attrDataList.size());
-            //System.out.println(key+"mean:"+mean);
-            attrMean.put(key.toString(), mean);
-            attrDataMap.put(key.toString(), attrDataList);
 
-            //System.out.println("mean"+mean);
+            mean = sum / listOfAttributeValue.size();
+            attrMean.put(key.toString(), mean);
+            mapOfAggregatedAttributeValue.put(key.toString(), listOfAttributeValue);
         }
 
-        // For each attribute, calculate the corresponding stddev
+        //* - Find stddev for each attribute
         for (String key : maxAttrInstance.keySet()) {
-            ArrayList tempAttrDataList = (ArrayList) attrDataMap.get(key.toString());
+            ArrayList tempAttrDataList = (ArrayList) mapOfAggregatedAttributeValue.get(key.toString());
 
             double attrMeanVal = (double) attrMean.get(key.toString());
             double meanDiff = 0;
@@ -151,28 +189,23 @@ public class KNN {
             double stdDev = 0;
 
             for (int tempAttrDataListCounter = 0; tempAttrDataListCounter < tempAttrDataList.size(); tempAttrDataListCounter++) {
-                //System.out.println("size of "+key.toString()+" is "+tempAttrDataList.size());
                 double x = (double) tempAttrDataList.get(tempAttrDataListCounter);
                 meanDiff = x - attrMeanVal;
-                /*
-                 System.out.println("key:"+key.toString());
-                 System.out.println("x:"+x+",attrMeanVal:"+attrMeanVal);
-                 System.out.println("meanDiff"+meanDiff);
-                 */
                 meanSquaredDiffSum += (meanDiff * meanDiff);
-                //System.out.println(x+","+meanDiff+","+meanSquaredDiffSum);
             }
 
             stdDev = Math.sqrt((meanSquaredDiffSum / tempAttrDataList.size()));
             attrStddev.put(key.toString(), stdDev);
         }
 
-        trainingInstanceListNormalized = new ArrayList();
+        listOfTrainingInstancesNormalized = new ArrayList();
         HashMap<String, Double> normalizedInstance, tempTrainingInstance;
 
-        for (int trainingInstanceCounter = 0; trainingInstanceCounter < trainingInstanceList.size(); trainingInstanceCounter++) {
+        //* - Compute z score
+        // The normalized value(z-score) will be stored in a new data structure: normalizedInstance, listOfInstanceNormalized
+        for (int trainingInstanceCounter = 0; trainingInstanceCounter < listOfTrainingInstance.size(); trainingInstanceCounter++) {
 
-            tempTrainingInstance = (HashMap<String, Double>) trainingInstanceList.get(trainingInstanceCounter);
+            tempTrainingInstance = (HashMap<String, Double>) listOfTrainingInstance.get(trainingInstanceCounter);
             normalizedInstance = new HashMap();
             for (String key : maxAttrInstance.keySet()) {
                 if (tempTrainingInstance.containsKey(key.toString())) {
@@ -184,25 +217,24 @@ public class KNN {
                         z = (instanceAttrVal - attributeMean) / attributeStddev;
                     }
                     normalizedInstance.put(key.toString(), z);
-                    //System.out.println("normalized " + instanceAttrVal + " to " + z);
-                    //System.out.println("\t mean=" + attributeMean + ",stddev=" + attributeStddev);
                 } else {
                     normalizedInstance.put(key.toString(), 3.0);
                 }
             }
-            trainingInstanceListNormalized.add(normalizedInstance);
+            listOfTrainingInstancesNormalized.add(normalizedInstance);
         }
-
         isNormalized = true;
     }
 
     public void testInstNormalization() {
+        // This method performs the normalization for test instance
+        // Z score normalization is required for every instance
         HashMap<String, Double> tempTestInstance = this.testInstance;
         testInstanceNormalized = new HashMap<String, Double>();
 
         for (String key : tempTestInstance.keySet()) {
 
-            ArrayList tempAttrDataList = (ArrayList) attrDataMap.get(key);
+            ArrayList tempAttrDataList = (ArrayList) mapOfAggregatedAttributeValue.get(key);
             int attrDataSize = tempAttrDataList.size();
 
             Double mean = (double) attrMean.get(key.toString());
@@ -219,108 +251,147 @@ public class KNN {
             if (stddev != 0) {
                 z = (x - mean) / stddev;
             }
-
             testInstanceNormalized.put(key.toString(), z);
-
         }
 
         isTestInstanceNormalized = true;
     }
 
+    /**
+     * Perform classification or regression, sub-method: regression() and
+     * classification()
+     *
+     * @param nearestNeighbours - HashMap contains
+     * <indexOfNearestNeighbour,meanSquaredError>
+     * @return Object - an object either in String or numeric
+     */
     public Object predict() {
 
-        // Check if every instance has a label assigned
-        if (trainingInstanceLabels.size() != trainingInstanceList.size()) {
+        /*  Performs classification or regression 
+         * **************************************
+         * - Check if all training instance labels are assigned 
+         * - Checks if training and test instance both normalized 
+         * - Calculate MSE for every training instance
+         * - Find the K nearest neighbor using computed MSE list
+         * - Pass nearest neighbours to classification() or regression()
+         * ****************************************
+         */
+        // * - Check if all training instance labels are assigned 
+        if (listOfTrainingInstanceLabel.size() != listOfTrainingInstance.size()) {
             System.err.println("Perhaps a label wasn't assigned to a previous instance.");
             return false;
         }
 
-        // Check if value in every attributes are normalized
+        // * - Checks if training and test instance both normalized 
         if (!isNormalized) {
             zScoreNormalization();
         }
-
-        // Normalize test isntance
         if (!isTestInstanceNormalized) {
             testInstNormalization();
         }
 
-        instancesMSE = new ArrayList();
-
-        // Get the normalized instance that contains maximum number of attributes
-        HashMap<String, Double> maxAttrInstance = (HashMap<String, Double>) trainingInstanceListNormalized.get(indexOfMaxAttributesCountInstance);
+        // * - Calculate MSE for every training instance
+        listOfInstanceMeanSquaredError = new ArrayList();
+        HashMap<String, Double> maxAttrInstance = (HashMap<String, Double>) listOfTrainingInstancesNormalized.get(indexOfMaxAttributesCountInstance);
         HashMap<String, Double> tempTrainingInst = null;
-        for (int trainingInstanceListCounter = 0; trainingInstanceListCounter < trainingInstanceListNormalized.size(); trainingInstanceListCounter++) {
+        for (int trainingInstanceListCounter = 0; trainingInstanceListCounter < listOfTrainingInstancesNormalized.size(); trainingInstanceListCounter++) {
             double mse = 0;
-            tempTrainingInst = (HashMap<String, Double>) trainingInstanceListNormalized.get(trainingInstanceListCounter);
+            tempTrainingInst = (HashMap<String, Double>) listOfTrainingInstancesNormalized.get(trainingInstanceListCounter);
             for (String key : maxAttrInstance.keySet()) {
                 if (!testInstanceNormalized.containsKey(key.toString())) {
                     testInstanceNormalized.put(key.toString(), -3);
                 }
                 double trainingInstValue = (double) tempTrainingInst.get(key.toString());
                 double testInstValue = (double) testInstanceNormalized.get(key.toString());
-                //System.out.println(trainingInstValue + "," + testInstValue);
 
                 mse += Math.abs(testInstValue - trainingInstValue);
             }
-            instancesMSE.add(trainingInstanceListCounter, mse);
+            listOfInstanceMeanSquaredError.add(trainingInstanceListCounter, mse);
         }
 
-        // Find the k nearest neighbour
+        // * - Find the K nearest neighbor using computed MSE list
         nearestNeighbours = new HashMap<Integer, Double>();
-        Object[] tempMSEList = instancesMSE.toArray();
+        Object[] arrOfInstanceMeanSquaredError = listOfInstanceMeanSquaredError.toArray();
 
-        for (int j = 0; j < tempMSEList.length; j++) {
-            //System.out.println(tempMSEList[j]);
-        }
-
-        // Find the nearest neighbour
         for (int nn_counter = 0; nn_counter < this.nearestNeighborCount; nn_counter++) {
             double min_mse = Double.MAX_VALUE;
             int min_mse_index = -1;
-            for (int k = 0; k < tempMSEList.length; k++) {
-                double mse = (double) tempMSEList[k];
+            for (int k = 0; k < arrOfInstanceMeanSquaredError.length; k++) {
+                double mse = (double) arrOfInstanceMeanSquaredError[k];
                 if (mse < min_mse) {
                     min_mse = mse;
                     min_mse_index = k;
                 }
             }
-            tempMSEList[min_mse_index] = Double.MAX_VALUE;
+            arrOfInstanceMeanSquaredError[min_mse_index] = Double.MAX_VALUE;
             nearestNeighbours.put(min_mse_index, min_mse);
         }
-
+        //* - Pass nearest neighbours to classification() or regression()
         return (this.isClassification) ? classify(nearestNeighbours) : regress(nearestNeighbours);
     }
 
+    /**
+     * Performs KNN classification, an extension of predict()
+     *
+     * @param nearestNeighbours a hashmap contains index of nearest neighbours
+     * and its mean squared error
+     * @return a label as a classification result
+     */
     public String classify(HashMap nearestNeighbours) {
-        HashMap<String,Integer> labelFrequency=new HashMap();
-        for(Object key:nearestNeighbours.keySet()){
-            int instanceIndex=(int)key;
-            String instanceLabel=(String) this.trainingInstanceLabels.get(instanceIndex);
-            if(labelFrequency.containsKey(instanceLabel)){
-                int frequency=labelFrequency.get(instanceLabel);
-                labelFrequency.put(instanceLabel, frequency+1);
-            }else{
+
+        /* Majority Voting Mechanism
+         ********************************************
+         *- Calculates the label frequency 
+         *- Returns the label with highest frequency
+         ********************************************/
+        // *- Calculates the label frequency 
+        HashMap<String, Integer> labelFrequency = new HashMap();
+        for (Object key : nearestNeighbours.keySet()) {
+            int instanceIndex = (int) key;
+            String instanceLabel = (String) this.listOfTrainingInstanceLabel.get(instanceIndex);
+            if (labelFrequency.containsKey(instanceLabel)) {
+                int frequency = labelFrequency.get(instanceLabel);
+                labelFrequency.put(instanceLabel, frequency + 1);
+            } else {
                 labelFrequency.put(instanceLabel, 1);
             }
         }
-        
-        String predictedLabel="null";
-        int maxFreq=0;
-        for(String key:labelFrequency.keySet()){
-            if(labelFrequency.get(key) > maxFreq){
-                maxFreq=labelFrequency.get(key);
-                predictedLabel=key;
+
+        //*- Returns the label with highest frequency
+        String predictedLabel = "null";
+        int maxFreq = 0;
+        for (String key : labelFrequency.keySet()) {
+            if (labelFrequency.get(key) > maxFreq) {
+                maxFreq = labelFrequency.get(key);
+                predictedLabel = key;
             }
-            
         }
-        
-        
         return predictedLabel;
     }
 
+    /**
+     * Performs KNN regression, an extension of of predict()
+     *
+     * @param nearestNeighbours a hashmap contains index of nearest neighbours
+     * and its mean squared error
+     * @return a double as a result of regression
+     */
     public double regress(HashMap nearestNeighbours) {
 
-        return 0.0;
+        /* Majority Voting Mechanism
+         * *******************************************
+         * - Find out and return the average of all neighbours
+         ********************************************
+         */
+        
+        //* - Find out and return the average of all neighbours
+        double sum=0;
+        for (Object key : nearestNeighbours.keySet()) {
+            int instanceIndex = (int) key;
+            double value=Double.parseDouble(this.listOfTrainingInstanceLabel.get(instanceIndex).toString()) ;
+            sum+=value;
+        }
+        
+        return sum/(nearestNeighbours.size());
     }
 }
