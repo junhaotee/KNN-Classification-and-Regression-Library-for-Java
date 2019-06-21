@@ -1,17 +1,17 @@
 # KNN Classification and Regression Library for Java
-* This library provides an easy-to-use Java API for KNN classification and regression. 
-* The implementation of the API is an indenpedent and does not make use of third-party machine learning libraries. 
-* This library is Android-compatible.
+* An easy-to-use Java API for KNN classification and regression. 
+* Indepdent implementation of KNN, does not make use of 3rd-party machine learning libraries. 
+* Android-compatible.
 
 ----
 ## Introduction to KNN
-**Introduction**
+**Concepts**
 
 ![knn-classifier](https://upload.wikimedia.org/wikipedia/commons/6/6a/Knn-Class.png) 
 
 The core of KNN is a majority voting mechanism. The mechanism involves finding the potential candidate(s) which shares the highest degree of similarity of an given instance. The similarity determined by a loss function, e.g. mean squared error. The 'K' refers to the number of best candidates to be chosen and should be an odd number. The outcome of a prediction is determined by the majority of assigned label from the best candidates.
 
-**Concepts**
+**Example**
 
 Using MSE(Mean squared error) as a loss function with 1NN:
 Given three vectors, label assigned and trained by KNN classifier:
@@ -41,7 +41,6 @@ The procedures are:
      - set training instance label
 3. Create a test instance
      - set test instance attribute
-     - set training instance label
 4. Perform prediction on classification/regression
 
 
@@ -50,39 +49,65 @@ The procedures are:
 Classifier is used to predict an output that is in discrete value, e.g. gender, color, names etc.
 
 ```
-// 1. Create an object of KNN classifier/regressor
-// 1st param: set the number of nearest neighbor(s)
-// 2nd param: set *true* for classifer, *false* for regressor
-KNN kNN = new KNN(1, true);
+public static void main(String[] args){
 
-// Create a training instance
-kNN.createInstance();
+    /* Example of KNN classifier using nearest neighbor of 1 */
+    KNN kNN = new KNN(1, true);
 
-// 1st param: a string attribute
-// 2nd param: a double value
-kNN.setInstanceAttr("attr"+6,7.0);
+    kNN.createInstance();
+    kNN.setInstanceAttr("attr1",26.0);
+    kNN.setInstanceAttr("attr2",79.0);
+    kNN.setInstanceAttr("attr3",15.0);
+    kNN.setInstanceAttr("attr4",78.0);
+    kNN.setInstanceLabel("label1");
+    //...iteratively create training instances
+    
+    kNN.createTestInstance();
+    kNN.setTestInstanceAttr("attr1",26.0);
+    kNN.setTestInstanceAttr("attr2",79.0);
+    kNN.setTestInstanceAttr("attr3",15.0);
+    kNN.setTestInstanceAttr("attr4",78.0);
 
-// Set the label for the training instance
-kNN.setInstanceLabel(20);
-
-//...iteratively create training instances
-
-// Perform prediction
-// Type cast is required
-// return a string if it's a classifier
-// return a double if it's a regressor
-Object prediction=kNN.predict();
-
-
-
+    String prediction=kNN.predict();
+    System.out.println(prediction);
+}
 ```
 
 **Example of using a KNN Regressor**
 
 Regressor is used to predict an output that is in continous value, e.g. temperature, height, stock price etc.
 
+```
+public static void main(String[] args){
+
+    /* Example of KNN regressor using nearest neighbor of 2 */
+    KNN kNN = new KNN(2, false);
+
+    kNN.createInstance();
+    kNN.setInstanceAttr("attr1",26.0);
+    kNN.setInstanceAttr("attr2",79.0);
+    kNN.setInstanceAttr("attr3",15.0);
+    kNN.setInstanceAttr("attr4",78.0);
+    kNN.setInstanceLabel(30);
+
+    //...iteratively create training instances
+    
+    kNN.createTestInstance();
+    kNN.setTestInstanceAttr("attr1",13.0);
+    kNN.setTestInstanceAttr("attr2",45.0);
+    kNN.setTestInstanceAttr("attr3",55.0);
+    kNN.setTestInstanceAttr("attr4",98.0);
+
+    double prediction=kNN.predict();
+    System.out.println(prediction);
+}
+```
+
+
 ## Loss Function: Mean Squared Error
+
 **Mean Squared Error**
+
 Mean squared  error is widely used loss function in statistics. When integrated with KNN, it tests the similarity between training and test data  and produces the average error between the two vectors. MSE is a positive integer. When MSE is 0, the two vectors have the same value(identical). A greater MSE implies greater difference between two vectors(more erros). 
 
 **The MSE equation**:
@@ -126,7 +151,8 @@ The KNN regression returns the average of nearest neighbors and return it as a p
 
 
 ## Performance
-
+* Tested the accuracy performance manually with the Iris dataset, the result is equivalent to Weka's KNN classifier. 
+* As for KNN regressor, Weka does not support KNN regression as of this writing but since the majority voting implementation is the same for both classifier and regressor, it should work fine.
 
 ## The Pros and Cons of KNN
 **Advantages of KNN**
@@ -159,7 +185,7 @@ When K is below optimal point, the algorithm is susceptible to the noisy data. W
 
 The current implementation is single threaded, the performance can be largely improved using parallel processing. E.g. reading file concurrently(IO-bound), parallel iterative operation(CPU-bound).
 
-* **Multi-label KNN **
+* **Multi-label KNN**
 
 Currently the KNN classifier supports only single label classification and does not support multilabel classification. 
 
@@ -168,3 +194,9 @@ Currently the KNN classifier supports only single label classification and does 
 Inverse distance weighted average is a mean value calculated based on the degree of error. A neighbor with higher error will contribute lesser value to the aggregated mean. Inversely,  a neighbor with lesser error will contribute more value to the aggregated mean. 
 
 The current implementation takes the basic average from the nearest neighbors and is susceptible to outliers effect. IDWA is introduced to resolve the issue.
+
+## Feedback
+
+There are many improvements can be made to this algorithm, please let me know if you find any issues, I'll be happy to improve them.
+Thanks in advance.
+tee@junhao.my
