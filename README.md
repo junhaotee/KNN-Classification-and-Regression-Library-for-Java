@@ -151,7 +151,7 @@ The KNN regression returns the average of nearest neighbors and return it as a p
 
 
 ## Performance
-* Tested the accuracy performance manually with the Iris dataset, the result is equivalent to Weka's KNN classifier. 
+* Tested the accuracy performance manually with the Iris dataset, the result is equivalent to Weka's KNN classifier.(Weka uses MSE as KNN loss-function)
 * As for KNN regressor, Weka does not support KNN regression as of this writing but since the majority voting implementation is the same for both classifier and regressor, it should work fine.
 
 ## The Pros and Cons of KNN
