@@ -9,7 +9,7 @@
 
 ![knn-classifier](https://upload.wikimedia.org/wikipedia/commons/6/6a/Knn-Class.png) 
 
-The core of KNN is a majority voting mechanism. The mechanism involves finding the potential candidate(s) which shares the highest degree of similarity of an given instance. The similarity determined by a loss function, e.g. mean squared error. The 'K' refers to the number of best candidates to be chosen and should be an odd number. The outcome of a prediction is determined by the majority of assigned label from the best candidates.
+The core of KNN is a majority voting mechanism. The mechanism involves finding the potential candidate(s) which shares the highest degree of similarity of an given instance. The similarity determined by a loss function, e.g. mean squared error. The 'K' refers to the number of best candidates to be chosen and should be an odd number in the case of classification. The outcome of a prediction is determined by the majority of assigned label from the best candidates.
 
 **Example**
 
@@ -28,7 +28,7 @@ Given a test object(label-less):
 
 Q: Which label has the highest similarity when compared to the test object?
 
-A: LABEL-1, since the test object([2,6,11]) has the smallest difference when compared to training data([1,5,10]). Each attribute has only a difference of 1 when determined by using MSE(loss function).
+A: LABEL-1, since the test object([2,6,11]) has the smallest difference when compared to training data([1,5,10]). Each attribute has only a difference of 1 when calculated using MSE(loss function).
 
 
 ## Getting Started
@@ -108,7 +108,7 @@ public static void main(String[] args){
 
 **Mean Squared Error**
 
-Mean squared  error is widely used loss function in statistics. When integrated with KNN, it tests the similarity between training and test data  and produces the average error between the two vectors. MSE is a positive integer. When MSE is 0, the two vectors have the same value(identical). A greater MSE implies greater difference between two vectors(more erros). 
+Mean squared  error isa  widely used loss-function in statistics. When integrated with KNN, it tests the similarity between training and test data  and produces the average error between the two vectors. MSE is a positive integer. When MSE is 0, the two vectors have the same value(identical). A greater MSE implies greater difference between two vectors(more errors). 
 
 **The MSE equation**:
 
@@ -126,7 +126,7 @@ Mean squared  error is widely used loss function in statistics. When integrated 
 
 Normalization brings all attributes/features to a common scale. The process of normalization is needed when the numeric attributes/features in a dataset doesn't belong to a common scale, e.g. age and height. The accuracy of classification/regression will be severely impact when performs directly on an unnormalized dataset with different kind of attributes.
 
-There are many techniques to normalize a dataset and Z-score is used in this implementation. Z-Score is widely used in many machine learning algorithms, it expresses the normalized value in terms of how far the raw value is deviated from mean. Z-score and has range of [-3,3], 0 is the mean value of the normalized attribute, both 3 and -3 represents the boundary for z-score. There is a a list of popular normalization technique recorded on Wikipedia.
+There are many techniques to normalize a dataset, Z-score is used in this implementation. Z-Score is widely used in many machine learning algorithms, it expresses the normalized value in terms of how far the raw value is deviated from mean. Z-score and has range of [-3,3], 0 is the mean value of the normalized attribute, both 3 and -3 represents the boundary for z-score. 
 
 **Equation for Z-score Normalization**
 
